@@ -6,7 +6,7 @@ def update_user_data(uploaded_file, user_column_names):
     if uploaded_file is not None:
         user_data = pd.read_csv(uploaded_file, header=0, index_col=0)
         if user_column_names:
-            column_names = [str(name) for name in user_column_names.split(',')] #.split(",")
+            column_names = [str(name) for name in user_column_names.split(",")] #.split(",")
             if len(column_names) == len(user_data.columns):
                 user_data.columns = column_names
 
@@ -30,11 +30,16 @@ def calculate_average_std(my_obj):
     st_deviation_df.index = ['std']
         
     complete_result = pd.concat([my_obj, avg_df, st_deviation_df])
-
-    chart_df = complete_result.loc[['avg', 'std']].T
     
-    return complete_result, avg, st_deviation, chart_df
+    return complete_result
     
 
-# complete_result, avg, st_deviation, chart_df = calculate_average_std(my_obj)
+# complete_result = calculate_average_std(my_obj)
 # print(complete_result)
+
+def create_graph(complete_result):
+    chart_df = complete_result.loc[['avg', 'std']].T
+    avg_data = chart_df['avg']
+    std_data = chart_df['std']
+    return avg_data, std_data
+

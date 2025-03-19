@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import backend
+import plotly.graph_objects as go
+
 
 st.title('''
 Smart Data Analyzer :female-scientist: :male-scientist:
@@ -17,9 +19,12 @@ user_column_names = st.text_input('Add your column names separated by comma')
 
 if st.button('Done!'):
     user_data = backend.update_user_data(uploaded_file, user_column_names)
-    complete_result, avg, st_deviation, chart_df = backend.calculate_average_std(user_data)
+    complete_result = backend.calculate_average_std(user_data)
     st.write(complete_result)
-      
+    graph_avg, graph_std = backend.create_graph(complete_result)
+
+    # https://plotly.com/python/distplot/
+    st.line_chart(graph_avg)
 
 
     save_locally = st.button('Save your result locally')
