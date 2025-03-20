@@ -27,10 +27,33 @@ if st.button('Done!'):
     st.line_chart(graph_avg)
 
 
-    save_locally = st.button('Save your result locally')
+if st.button('Save your result locally'):
+    uploaded_file_path = r"C:\Users\scigo\Desktop\portfolio\smart-data-analyzer\simple_data.csv"
+    user_data = backend.update_user_data(uploaded_file, user_column_names)
+    complete_result = backend.calculate_average_std(user_data)
+    backend.save_user_result(uploaded_file_path, complete_result)
     save_on_aws = st.button('Save your result on AWS S3 bucket')
+    st.success(f'Your result was saved')
 
+# def expensive_process(option, add):
+#     with st.spinner('Processing...'):
+#         time.sleep(5)
+#     df = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C':[7, 8, 9]}) + add
+#     return (df, add)
 
+# cols = st.columns(2)
+# option = cols[0].selectbox('Select a number', options=['1', '2', '3'])
+# add = cols[1].number_input('Add a number', min_value=0, max_value=10)
+
+# if 'processed' not in st.session_state:
+#     st.session_state.processed = {}
+
+# # Process and save results
+# if st.button('Process'):
+#     result = expensive_process(option, add)
+#     st.session_state.processed[option] = result
+#     st.write(f'Option {option} processed with add {add}')
+#     result[0]
 
 
 
