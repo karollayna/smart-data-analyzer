@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
+import boto3
 
 def update_user_data(uploaded_file_path, user_column_names):
         
@@ -66,3 +67,38 @@ def save_user_result(uploaded_file_path, complete_result):
 # save_user_result(uploaded_file_path, complete_result)
 # print(pd.read_csv(r"C:\Users\scigo\Desktop\portfolio\smart-data-analyzer\data_analysis\simple_data.csv"))
 
+
+class AwsHandler():
+    def __init__(self, s3_secret_key, key_id, bucket_name, region_name):
+        self.s3_secret_key = s3_secret_key
+        self.key_id = key_id
+        self.bucket_name = bucket_name
+        self.region_name = region_name
+        self.s3_user = boto3.client('s3', 
+                               aws_access_key_id=self.key_id, 
+                               aws_secret_access_key=self.s3_secret_key,
+                               region_name=self.region_name)
+        
+    def upload(self, file_name):
+        f = open(file_name, 'rb')
+        self.s3_user.upload_fileobj(f, self.bucket_name, f'{file_name}')
+        print(f'{file_name} uploaded')
+
+    def download_file(self, file_name):
+        self.s3_user.download_file(self.bucket_name, self.file_name, f'downloaded_{file_name}')
+        print(f'File {file_name} downloaded')
+
+    def check_if_file_exist(self, file_name):
+        file_list = self.list_files()
+        return file_name in [obj['Key'] for obj in file_list]
+
+    def list_files(self, pattern=None):
+        if pattern is None:
+            response = self.s3_user.list_objects_v2(Bucket=self.bucket_name)
+        else:
+            response = self.s3_user.list_objects_v2(Bucket=self.bucket_name, Prefix=pattern)
+        file_names = [obj for obj in response["Contents"]]
+        print(file_names)
+        return file_names
+
+    print('object created')

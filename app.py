@@ -32,37 +32,17 @@ if st.button('Save your result locally'):
     user_data = backend.update_user_data(uploaded_file, user_column_names)
     complete_result = backend.calculate_average_std(user_data)
     backend.save_user_result(uploaded_file_path, complete_result)
-    save_on_aws = st.button('Save your result on AWS S3 bucket')
+    # save_on_aws = st.button('Save your result on AWS S3 bucket')
     st.success(f'Your result was saved')
 
-# def expensive_process(option, add):
-#     with st.spinner('Processing...'):
-#         time.sleep(5)
-#     df = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C':[7, 8, 9]}) + add
-#     return (df, add)
-
-# cols = st.columns(2)
-# option = cols[0].selectbox('Select a number', options=['1', '2', '3'])
-# add = cols[1].number_input('Add a number', min_value=0, max_value=10)
-
-# if 'processed' not in st.session_state:
-#     st.session_state.processed = {}
-
-# # Process and save results
-# if st.button('Process'):
-#     result = expensive_process(option, add)
-#     st.session_state.processed[option] = result
-#     st.write(f'Option {option} processed with add {add}')
-#     result[0]
-
-
-
-
-
-### plik zapisywany bedzie w AWS ##################################################
-    # directory = r'C:\Users\scigo\Desktop'
-    # file_name = 'output.csv'
-    # filepath = os.path.join(directory, file_name)
-    # user_data.to_csv(filepath, index=True)
-    # st.success(f"Plik zapisany pomyślnie w {directory} jako {file_name}")
-    # st.line_chart(user_data)
+if st.button('Save on AWS s3 bucket'):
+    s3_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
+    key_id = st.secrets["AWS_ACCESS_KEY_ID"]
+    bucket_name = st.secrets["S3_BUCKET_NAME"]
+    region_name = st.secrets["AWS_DEFAULT_REGION"]
+    aws_connection = backend.AwsHandler(s3_secret_key, key_id, bucket_name, region_name)
+    
+    with st.spinner("Przesyłanie..."):
+        aws_connection.upload(uploaded_file.name)
+        st.success(f"Plik {uploaded_file.name} zapisany w S3!")
+        st.write('good job!!!')
