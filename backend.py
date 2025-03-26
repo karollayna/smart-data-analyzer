@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
-import os
 import boto3
+from datetime import datetime
 
 def upload_user_files():
     # upload user files
@@ -10,8 +10,7 @@ def upload_user_files():
         type='csv', 
         accept_multiple_files=True
         )
-    if uploaded_files:
-        return uploaded_files
+    return uploaded_files
 
 def validate_user_data(uploaded_files):
     # Define expected files and columns
@@ -34,120 +33,46 @@ def validate_user_data(uploaded_files):
         ]
     }
 
-    unexpected_files = [file.name for file in uploaded_files if file.name not in expected_files.keys()]
+    valid_files = []
+    unexpected_files = []
     
-    # Handle unexpected files
-    if unexpected_files:
-        st.error(f':x: Unexpected files: {unexpected_files}\n'
-                 f'Expected files: {list(expected_files.keys())}')
-        return
-
-    # Read and validate user data
     for uploaded_file in uploaded_files:
-        user_data = pd.read_csv(uploaded_file)
-        expected_columns = expected_files.get(uploaded_file.name, [])
-        if user_data.empty:
-            st.error(f':x: File "{uploaded_file.name}" is empty.')
-            continue
-        if user_data.columns.tolist() != expected_columns:
-            st.error(f''':x: File "{uploaded_file.name}" has incorrect columns.\n
-                    Expected: {expected_columns}\n Found: {user_data.columns.tolist()}''')
+        if uploaded_file.name not in expected_files:
+            unexpected_files.append(uploaded_file.name)
+            st.error(f''':x: Unexpected files: {unexpected_files}\n
+                     Expected files: {list(expected_files.keys())}''')
         else:
+            user_data = pd.read_csv(uploaded_file)
+            expected_columns = expected_files[uploaded_file.name]
+            if user_data.empty:
+                st.error(f':x: File "{uploaded_file.name}" is empty.')
+                continue
+            if list(user_data.columns) != expected_columns:
+                st.error(f''':x: File "{uploaded_file.name}" has incorrect columns.\n
+                         Expected: {expected_columns}\n Found: {list(user_data.columns)}''')
+                continue
+
+            valid_files.append((uploaded_file.name, uploaded_file.getvalue()))
             st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
+    return valid_files
 
-# def update_user_data(uploaded_file_path):
-        
-#     if uploaded_file_path is not None:
-#         user_data = pd.read_csv(uploaded_file_path, header=0, index_col=0)
-#         st.write(user_data)
-
-#     return user_data
-
-
-# def calculate_average_std(my_obj):
-#     avg = my_obj.mean(axis='rows').round(2)
-#     st_deviation = my_obj.std(axis='rows').round(2)
-
-#     avg_df = avg.to_frame().T
-#     st_deviation_df = st_deviation.to_frame().T
-
-#     avg_df.index = ['avg']
-#     st_deviation_df.index = ['std']
-        
-#     complete_result = pd.concat([my_obj, avg_df, st_deviation_df])
+def upload_files_to_s3(valid_files):
     
-#     return complete_result
+    s3_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
+    key_id = st.secrets["AWS_ACCESS_KEY_ID"]
+    bucket_name = st.secrets["S3_BUCKET_NAME"]
+    region_name = st.secrets["AWS_DEFAULT_REGION"]
+    s3_user = boto3.client('s3', 
+                            aws_access_key_id=key_id, 
+                            aws_secret_access_key=s3_secret_key,
+                            region_name=region_name)
 
-
-# def create_graph(complete_result):
-#     chart_df = complete_result.loc[['avg', 'std']].T
-#     avg_data = chart_df['avg']
-#     std_data = chart_df['std']
-#     return avg_data, std_data
-
-# def save_user_result(uploaded_file_path, complete_result):
-#     current_directory = os.path.dirname(uploaded_file_path)
-#     destination_folder_name = "data_analysis"
-#     destination_folder_path = os.path.join(current_directory, destination_folder_name)
-#     if not os.path.exists(destination_folder_path):
-#         os.makedirs(destination_folder_path)
-#         print(f"Folder '{destination_folder_name}' został utworzony w katalogu: {current_directory}")
-#     else:
-#         print(f"Folder '{destination_folder_name}' już istnieje w katalogu: {current_directory}")
-    
-#     csv_file_name = os.path.splitext(os.path.basename(uploaded_file_path))[0] + '.csv'
-#     csv_file_path = os.path.join(destination_folder_path, csv_file_name)
-
-#     complete_result.to_csv(csv_file_path, index=False)
-    
-#     print(f"Wynik zapisano do pliku: {csv_file_path}")
-
-
-# # uploaded_file_path = r"C:\Users\scigo\Desktop\portfolio\smart-data-analyzer\simple_data.csv"
-# # user_column_names = ['skg1','2','3','4','5','6','7','8','9','10','11','12']
-# # my_obj = update_user_data(uploaded_file_path, user_column_names)
-# # # print(my_obj)
-    
-
-# # complete_result = calculate_average_std(my_obj)
-# # print(complete_result)
-
-
-# # save_user_result(uploaded_file_path, complete_result)
-# # print(pd.read_csv(r"C:\Users\scigo\Desktop\portfolio\smart-data-analyzer\data_analysis\simple_data.csv"))
-
-
-# class AwsHandler():
-#     def __init__(self, s3_secret_key, key_id, bucket_name, region_name):
-#         self.s3_secret_key = s3_secret_key
-#         self.key_id = key_id
-#         self.bucket_name = bucket_name
-#         self.region_name = region_name
-#         self.s3_user = boto3.client('s3', 
-#                                aws_access_key_id=self.key_id, 
-#                                aws_secret_access_key=self.s3_secret_key,
-#                                region_name=self.region_name)
-        
-#     def upload(self, file_name):
-#         f = open(file_name, 'rb')
-#         self.s3_user.upload_fileobj(f, self.bucket_name, f'{file_name}')
-#         print(f'{file_name} uploaded')
-
-#     def download_file(self, file_name):
-#         self.s3_user.download_file(self.bucket_name, self.file_name, f'downloaded_{file_name}')
-#         print(f'File {file_name} downloaded')
-
-#     def check_if_file_exist(self, file_name):
-#         file_list = self.list_files()
-#         return file_name in [obj['Key'] for obj in file_list]
-
-#     def list_files(self, pattern=None):
-#         if pattern is None:
-#             response = self.s3_user.list_objects_v2(Bucket=self.bucket_name)
-#         else:
-#             response = self.s3_user.list_objects_v2(Bucket=self.bucket_name, Prefix=pattern)
-#         file_names = [obj for obj in response["Contents"]]
-#         print(file_names)
-#         return file_names
-
-#     print('object created')
+    for file_name, file_content in valid_files:
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_file_name = f"{current_time}_{file_name}"
+        s3_user.put_object(
+            Bucket = bucket_name,
+            Key = unique_file_name,
+            Body = file_content
+            )            
+        st.success(f':white_check_mark: File "{unique_file_name}" has been uploaded to the cloud.')

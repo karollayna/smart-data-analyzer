@@ -1,5 +1,5 @@
 to_do.txt
-.streamlit/secrets.toml
+.streamlit/
 user_data/
 create_database.sql
 create_view.sql
