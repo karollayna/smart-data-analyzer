@@ -37,6 +37,9 @@ st.markdown(
 """,
 )
 
+if "data_uploaded" not in st.session_state:
+    st.session_state["data_uploaded"] = False
+
 uploaded_files = backend.upload_user_files()
 
 if uploaded_files:
@@ -44,5 +47,16 @@ if uploaded_files:
     if valid_files:
         if st.button("Save your data :cloud:"):
             with st.spinner("Uploading your data to the cloud..."):
-                backend.upload_files_to_s3(valid_files)
-                st.success(":white_check_mark: Your data has been saved to the cloud.")
+                uploaded_files = backend.upload_files_to_s3(valid_files)
+                if uploaded_files:
+                    st.success(
+                        ":white_check_mark: Your data has been saved to the cloud."
+                    )
+                    st.session_state["data_uploaded"] = True
+
+if st.session_state["data_uploaded"]:
+    if st.button("Show your data :bar_chart:"):
+        with st.spinner("Loading your data..."):
+            df = backend.connect_with_snowflake()
+            st.success(":white_check_mark: Your data has been loaded successfully.")
+            st.write(df)

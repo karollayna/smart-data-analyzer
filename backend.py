@@ -2,7 +2,8 @@ import pandas as pd
 import streamlit as st
 import boto3
 from datetime import datetime
-
+import time
+import snowflake.connector
 
 def upload_user_files():
     # upload user files
@@ -90,3 +91,28 @@ def upload_files_to_s3(valid_files):
         st.success(
             f':white_check_mark: File "{unique_file_name}" has been uploaded to the cloud.'
         )
+    return unique_file_name
+
+
+def connect_with_snowflake():
+
+    snowflake_account = st.secrets["SNOWFLAKE_ACCOUNT"]
+    snowflake_user = st.secrets["SNOWFLAKE_USER"]
+    snowflake_password = st.secrets["SNOWFLAKE_PASSWORD"]
+    snowflake_warehouse = st.secrets["SNOWFLAKE_WAREHOUSE"]
+    snowflake_database = st.secrets["SNOWFLAKE_DATABASE"]
+    snowflake_schema = st.secrets["SNOWFLAKE_SCHEMA"]
+
+    conn = snowflake.connector.connect(
+        user=snowflake_user,
+        password=snowflake_password,
+        account=snowflake_account,
+        warehouse=snowflake_warehouse,
+        database=snowflake_database,
+        schema=snowflake_schema,
+    )
+
+    results = "SELECT * FROM experiment1_survival"
+    df = pd.read_sql(results, conn)
+    conn.close()
+    return df
