@@ -3,5 +3,4 @@ to_do.txt
 user_data/
 create_database.sql
 create_view.sql
-.pre-commit-config.yaml
 karollayna_accessKeys.csv

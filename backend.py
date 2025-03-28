@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 import boto3
 from datetime import datetime
-import time
 import snowflake.connector
 
 def upload_user_files():
