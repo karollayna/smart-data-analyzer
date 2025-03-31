@@ -63,33 +63,7 @@ if st.session_state["data_uploaded"] and not st.session_state['parameters_for_pl
         with st.spinner("Loading your data..."):
             df = backend.connect_with_snowflake()
             st.success(":white_check_mark: Your data has been loaded successfully.")
-            # st.write("**Select the columns you want to plot:**")
-            # customize parameters for plot
-            # col1, col2, col3 = st.columns(3)
-            # with col1:
-            #     st.session_state["selected_x_axis"] = st.selectbox(
-            #         'select x-axis',
-            #         options=df.columns,
-            #         index=None,
-            #         placeholder="select x-axis",
-            #         key="selected_x_axis"
-            #         )
-            # with col2:
-            #     st.session_state['selected_y_axis'] = st.selectbox(
-            #         'select y-axis',
-            #         options=df.columns,
-            #         index=None,
-            #         placeholder="select y-axis",
-            #         key="selected_y_axis"
-            #         )
-            # with col3:
-            #     st.session_state['selected_additional_parameter'] = st.selectbox(
-            #         "Select additional parameter", 
-            #         options=df.columns,
-            #         index=None,
-            #         placeholder="select additional parameter",  
-            #         key="selected_additional_parameter"
-            #         )
+        
             st.session_state['parameters_for_plot_selected'] = True
             st.session_state['df'] = df
             st.session_state["selected_x_axis"] = df["DRUG_CONCENTRATION"]
@@ -105,14 +79,6 @@ if st.session_state['parameters_for_plot_selected']:
                 y=st.session_state["selected_y_axis"],
                 color=st.session_state["selected_additional_parameter"]
             )
-            # df_filtered = df[[st.session_state["selected_x_axis"], 
-            #                     st.session_state["selected_y_axis"], 
-            #                     st.session_state["selected_parameter"]]]
-            # fig = px.scatter(
-            #         df_filtered,
-            #         x=st.session_state["selected_x_axis"],
-            #         y=st.session_state["selected_y_axis"],
-            #         color=st.session_state["selected_parameter"]
-            #     )
+     
             st.plotly_chart(fig)
             st.session_state['plot_created'] = True
