@@ -119,5 +119,4 @@ def connect_with_snowflake():
         st.write(df)
         st.success(":white_check_mark: Your data has been loaded successfully.")
         
-
     return df
