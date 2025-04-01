@@ -62,8 +62,7 @@ if st.session_state["data_uploaded"] and not st.session_state['parameters_for_pl
     if st.button("Show your data :bar_chart:"):
         with st.spinner("Loading your data..."):
             df = backend.connect_with_snowflake()
-            st.success(":white_check_mark: Your data has been loaded successfully.")
-        
+            
             st.session_state['parameters_for_plot_selected'] = True
             st.session_state['df'] = df
             st.session_state["selected_x_axis"] = df["DRUG_CONCENTRATION"]

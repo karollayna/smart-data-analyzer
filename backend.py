@@ -114,4 +114,10 @@ def connect_with_snowflake():
     results = "SELECT * FROM experiment1_survival"
     df = pd.read_sql(results, conn)
     conn.close()
+
+    with st.expander("Click to see your data"):
+        st.write(df)
+        st.success(":white_check_mark: Your data has been loaded successfully.")
+        
+
     return df
