@@ -3,6 +3,7 @@ import streamlit as st
 import boto3
 from datetime import datetime
 import snowflake.connector
+import time
 
 def upload_user_files():
     # upload user files
@@ -111,12 +112,42 @@ def connect_with_snowflake():
         schema=snowflake_schema,
     )
 
-    results = "SELECT * FROM experiment1_survival"
-    df = pd.read_sql(results, conn)
-    conn.close()
+    return conn
 
-    with st.expander("Click to see your data"):
-        st.write(df)
-        st.success(":white_check_mark: Your data has been loaded successfully.")
-        
-    return df
+
+def check_pipe_status(pipe_name):
+    conn = connect_with_snowflake()
+    cursor = conn.cursor()
+    query = f"SELECT SYSTEM$PIPE_STATUS('{pipe_name}');"
+    cursor.execute(query)
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return result[0]
+
+def load_data_after_pipe(table_name):
+    conn = connect_with_snowflake()
+    cursor = conn.cursor()
+    query = f"SELECT * FROM {table_name};"
+    cursor.execute(query)
+    results = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return results
+
+def wait_for_pipe_completion(pipe_name):
+    while True:
+        status = check_pipe_status(pipe_name)
+        if status == 'RUNNING' or status == 'PAUSED':
+            st.write(f"Pipe {pipe_name} is still running or paused. Waiting...")
+            time.sleep(10)
+        elif status == 'RESUMED':
+            st.write(f"Pipe {pipe_name} has resumed. Waiting for completion...")
+            time.sleep(10)
+        elif status == 'COMPLETED':
+            st.write(f"Pipe {pipe_name} has completed.")
+            break
+        else:
+            st.write(f"Pipe {pipe_name} status: {status}.")
+            break
+    
