@@ -65,8 +65,24 @@ if st.session_state["data_uploaded"] and not st.session_state['snowflake_connect
         st.session_state['snowflake_connected'] = True
 
 if st.session_state['snowflake_connected']:
-    with st.spinner('Loading your data from Snowflake...'):
-        backend.wait_for_pipe_completion("update_dim_cell_lines")
+    if st.button("Refresh PIPE update_dim_cell_lines"):
+        with st.spinner("Refreshing PIPE..."):
+            result = backend.refresh_snowpipe("update_dim_cell_lines")
+            user_data = backend.fetch_data('dim_cell_lines')
+            with st.expander("dim_cell_lines"):
+                st.write(user_data)
+    if st.button("Refresh PIPE update_dim_drugs"):
+        with st.spinner("Refreshing PIPE..."):
+            result = backend.refresh_snowpipe("update_dim_drugs")
+            user_data = backend.fetch_data('dim_drugs')
+            with st.expander("dim_drugs"):
+                st.write(user_data)
+    if st.button("Refresh PIPE update_fac_results"):
+        with st.spinner("Refreshing PIPE..."):
+            result = backend.refresh_snowpipe("update_fac_results")
+            user_data = backend.fetch_data('fac_results')
+            with st.expander("fac_results"):
+                st.write(user_data)
 
 # if st.session_state['snowflake_connected'] and not st.session_state['parameters_for_plot_selected']:
 #     st.subheader("Select parameters for your plot")

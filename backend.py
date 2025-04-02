@@ -114,40 +114,19 @@ def connect_with_snowflake():
 
     return conn
 
-
-def check_pipe_status(pipe_name):
+def refresh_snowpipe(pipe_name):
     conn = connect_with_snowflake()
-    cursor = conn.cursor()
-    query = f"SELECT SYSTEM$PIPE_STATUS('{pipe_name}');"
-    cursor.execute(query)
-    result = cursor.fetchone()
-    cursor.close()
+    cur = conn.cursor()
+    cur.execute(f"ALTER PIPE {pipe_name} REFRESH;")
     conn.close()
-    return result[0]
+    return "PIPE refreshed!"
 
-def load_data_after_pipe(table_name):
+def fetch_data(table_name):
     conn = connect_with_snowflake()
-    cursor = conn.cursor()
-    query = f"SELECT * FROM {table_name};"
-    cursor.execute(query)
-    results = cursor.fetchall()
-    cursor.close()
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM {table_name};")
+    data = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
     conn.close()
-    return results
-
-def wait_for_pipe_completion(pipe_name):
-    while True:
-        status = check_pipe_status(pipe_name)
-        if status == 'RUNNING' or status == 'PAUSED':
-            st.write(f"Pipe {pipe_name} is still running or paused. Waiting...")
-            time.sleep(10)
-        elif status == 'RESUMED':
-            st.write(f"Pipe {pipe_name} has resumed. Waiting for completion...")
-            time.sleep(10)
-        elif status == 'COMPLETED':
-            st.write(f"Pipe {pipe_name} has completed.")
-            break
-        else:
-            st.write(f"Pipe {pipe_name} status: {status}.")
-            break
-    
+    df = pd.DataFrame(data, columns=columns)
+    return df
