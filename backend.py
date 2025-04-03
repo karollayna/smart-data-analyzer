@@ -125,8 +125,8 @@ def fetch_data(table_name):
     conn = connect_with_snowflake()
     cur = conn.cursor()
     cur.execute(f"SELECT * FROM {table_name};")
-    data = cur.fetchall()
+    rows = cur.fetchall()
     columns = [desc[0] for desc in cur.description]
+    cur.close()
     conn.close()
-    df = pd.DataFrame(data, columns=columns)
-    return df
+    return columns, pd.DataFrame(rows, columns=columns)

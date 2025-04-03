@@ -40,7 +40,8 @@ st.markdown(
 if "data_uploaded" not in st.session_state:
     st.session_state["data_uploaded"] = False
     st.session_state["snowflake_connected"] = False
-    st.session_state['df'] = None
+    st.session_state["data_updated"] = False
+    st.session_state['data'] = {}
     st.session_state['parameters_for_plot_selected'] = False
     st.session_state['plot_created'] = False
 
@@ -64,72 +65,73 @@ if st.session_state["data_uploaded"] and not st.session_state['snowflake_connect
         conn = backend.connect_with_snowflake()
         st.session_state['snowflake_connected'] = True
 
-if st.session_state['snowflake_connected']:
-    if st.button("Refresh PIPE update_dim_cell_lines"):
-        with st.spinner("Refreshing PIPE..."):
-            result = backend.refresh_snowpipe("update_dim_cell_lines")
-            user_data = backend.fetch_data('dim_cell_lines')
-            with st.expander("dim_cell_lines"):
-                st.write(user_data)
-    if st.button("Refresh PIPE update_dim_drugs"):
-        with st.spinner("Refreshing PIPE..."):
-            result = backend.refresh_snowpipe("update_dim_drugs")
-            user_data = backend.fetch_data('dim_drugs')
-            with st.expander("dim_drugs"):
-                st.write(user_data)
-    if st.button("Refresh PIPE update_fac_results"):
-        with st.spinner("Refreshing PIPE..."):
-            result = backend.refresh_snowpipe("update_fac_results")
-            user_data = backend.fetch_data('fac_results')
-            with st.expander("fac_results"):
-                st.write(user_data)
+if st.session_state['snowflake_connected'] and not st.session_state['data_updated']:
+    tables_pipes = {
+        'dim_cell_lines': 'update_dim_cell_lines',
+        'dim_drugs': 'update_dim_drugs',
+        'fac_results': 'update_fac_results',
+    }
 
-# if st.session_state['snowflake_connected'] and not st.session_state['parameters_for_plot_selected']:
+    for table, pipe in tables_pipes.items():
+        if st.button(f'Refresh data  {table}'):
+            with st.spinner(f'Refreshing data {table}'):
+                time.sleep(20)
+                backend.refresh_snowpipe(pipe)
+                columns, data = backend.fetch_data(table)
+                st.session_state["data"][table] = data
+                st.session_state["data_updated"] = True
+                st.success(f"Data from {table} updated!")
+                
+    for table, data in st.session_state["data"].items():
+        with st.expander(f"{table}"):
+            st.write(data)
+
+# if st.session_state['data_updated'] and not st.session_state['parameters_for_plot_selected']:
 #     st.subheader("Select parameters for your plot")
-#     df = st.session_state.get('df')
-#     if df is not None:
-#         options = list(df.columns)
-#         cell_lines = df['CELL_LINE_NAME'].str.lower().unique().tolist()
-#         drugs = df['DRUG_NAME'].str.lower().unique().tolist()
-    
-#         col1, col2, col3 = st.columns(3)
-#         with col1:
-#             x_axis = st.selectbox("Select X-axis:", options, index=options.index('DRUG_CONCENTRATION'))
-#         with col2:
-#             y_axis = st.selectbox("Select Y-axis:", options, index=options.index('SURVIVAL_RATE_PERCENT'))
-#         with col3:
-#             filter_type = st.radio("Filter by:", ["Drugs", "Cell Lines"], index=0, key="filter_type")
-            
-#         if filter_type == "Drugs":
-#             selected_value = st.selectbox("Select drug:", drugs)
-#         else:
-#             selected_value = st.selectbox("Select cell line:", cell_lines) 
+#     df = st.session_state["data"].get("fac_results", None)
+ 
+#     options = list(df.columns)
+#     cell_lines = df['CELL_LINE_NAME'].str.lower().unique().tolist()
+#     drugs = df['DRUG_NAME'].str.lower().unique().tolist()
 
-#         if st.button("Create your plot :bar_chart:"):
-#                 with st.spinner("Creating your plot..."):
-#                     if filter_type == "Drugs":
-#                         filtered_df = df[df['DRUG_NAME'] == selected_value] 
-#                         color_by = 'CELL_LINE_NAME'
-#                         title = f"Drug: {selected_value} - Survival Rate vs Drug Concentration"
-#                         legend_title = "Cell Lines"
-#                     else:
-#                         filtered_df = df[df['CELL_LINE_NAME'] == selected_value]
-#                         color_by = 'DRUG_NAME'
-#                         title = f"Cell Line: {selected_value} - Survival Rate vs Drug Concentration"
-#                         legend_title = "Drugs"
+#     col1, col2, col3 = st.columns(3)
+#     with col1:
+#         x_axis = st.selectbox("Select X-axis:", options, index=options.index('DRUG_CONCENTRATION'))
+#     with col2:
+#         y_axis = st.selectbox("Select Y-axis:", options, index=options.index('SURVIVAL_RATE_PERCENT'))
+#     with col3:
+#         filter_type = st.radio("Filter by:", ["Drugs", "Cell Lines"], index=0, key="filter_type")
+        
+#     if filter_type == "Drugs":
+#         selected_value = st.selectbox("Select drug:", drugs)
+#     else:
+#         selected_value = st.selectbox("Select cell line:", cell_lines) 
 
-#                     fig = px.scatter(
-#                         filtered_df,
-#                         x=x_axis,
-#                         y=y_axis,
-#                         color=color_by,
-#                         hover_data=['DRUG_NAME', 'CELL_LINE_NAME']
-#                     )
-#                     fig.update_layout(
-#                         title=title,
-#                         xaxis_title=x_axis,
-#                         yaxis_title=y_axis,
-#                         legend_title=legend_title
-#                     )
-#                     st.plotly_chart(fig)
-#                     st.session_state['plot_created'] = True
+#     if st.button("Create your plot :bar_chart:"):
+#         with st.spinner("Creating your plot..."):
+#             if filter_type == "Drugs":
+#                 filtered_df = df[df['DRUG_NAME'] == selected_value] 
+#                 color_by = 'CELL_LINE_NAME'
+#                 title = f"Drug: {selected_value} - Survival Rate vs Drug Concentration"
+#                 legend_title = "Cell Lines"
+#             else:
+#                 filtered_df = df[df['CELL_LINE_NAME'] == selected_value]
+#                 color_by = 'DRUG_NAME'
+#                 title = f"Cell Line: {selected_value} - Survival Rate vs Drug Concentration"
+#                 legend_title = "Drugs"
+
+#             fig = px.scatter(
+#                 filtered_df,
+#                 x=x_axis,
+#                 y=y_axis,
+#                 color=color_by,
+#                 hover_data=['DRUG_NAME', 'CELL_LINE_NAME']
+#             )
+#             fig.update_layout(
+#                 title=title,
+#                 xaxis_title=x_axis,
+#                 yaxis_title=y_axis,
+#                 legend_title=legend_title
+#             )
+#             st.plotly_chart(fig)
+#             st.session_state['plot_created'] = True
