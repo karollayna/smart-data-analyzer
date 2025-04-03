@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import backend
 import plotly.express as px
+import time
 
 st.title(
     """
@@ -38,11 +39,12 @@ st.markdown(
 
 if "data_uploaded" not in st.session_state:
     st.session_state["data_uploaded"] = False
+    st.session_state["snowflake_connected"] = False
+    st.session_state["data_updated"] = False
+    st.session_state['data'] = {}
     st.session_state['parameters_for_plot_selected'] = False
     st.session_state['plot_created'] = False
-    st.session_state["selected_x_axis"] = None
-    st.session_state["selected_y_axis"] = None
-    st.session_state["selected_additional_parameter"] = None
+
 
 if not st.session_state["data_uploaded"]:
     uploaded_files = backend.upload_user_files()
@@ -58,27 +60,78 @@ if not st.session_state["data_uploaded"]:
                         )
                         st.session_state["data_uploaded"] = True
                     
-if st.session_state["data_uploaded"] and not st.session_state['parameters_for_plot_selected']:
-    if st.button("Show your data :bar_chart:"):
-        with st.spinner("Loading your data..."):
-            df = backend.connect_with_snowflake()
-            st.success(":white_check_mark: Your data has been loaded successfully.")
-        
-            st.session_state['parameters_for_plot_selected'] = True
-            st.session_state['df'] = df
-            st.session_state["selected_x_axis"] = df["DRUG_CONCENTRATION"]
-            st.session_state['selected_y_axis'] = df["SURVIVAL_RATE_PERCENT"]
-            st.session_state['selected_additional_parameter'] = df["CELL_LINE_NAME"]
+if st.session_state["data_uploaded"] and not st.session_state['snowflake_connected']:
+    with st.spinner('Connecting with Snowflake...'):
+        conn = backend.connect_with_snowflake()
+        st.session_state['snowflake_connected'] = True
 
-if st.session_state['parameters_for_plot_selected']:
-    if st.button("Create your plot :bar_chart:"):
-        with st.spinner("Creating your plot..."):
-            fig = px.scatter(
-                st.session_state['df'],
-                x=st.session_state["selected_x_axis"],
-                y=st.session_state["selected_y_axis"],
-                color=st.session_state["selected_additional_parameter"]
-            )
-     
-            st.plotly_chart(fig)
-            st.session_state['plot_created'] = True
+if st.session_state['snowflake_connected'] and not st.session_state['data_updated']:
+    tables_pipes = {
+        'dim_cell_lines': 'update_dim_cell_lines',
+        'dim_drugs': 'update_dim_drugs',
+        'fac_results': 'update_fac_results',
+    }
+
+    for table, pipe in tables_pipes.items():
+        if st.button(f'Refresh data  {table}'):
+            with st.spinner(f'Refreshing data {table}'):
+                time.sleep(20)
+                backend.refresh_snowpipe(pipe)
+                columns, data = backend.fetch_data(table)
+                st.session_state["data"][table] = data
+                st.session_state["data_updated"] = True
+                st.success(f"Data from {table} updated!")
+                
+    for table, data in st.session_state["data"].items():
+        with st.expander(f"{table}"):
+            st.write(data)
+
+# if st.session_state['data_updated'] and not st.session_state['parameters_for_plot_selected']:
+#     st.subheader("Select parameters for your plot")
+#     df = st.session_state["data"].get("fac_results", None)
+ 
+#     options = list(df.columns)
+#     cell_lines = df['CELL_LINE_NAME'].str.lower().unique().tolist()
+#     drugs = df['DRUG_NAME'].str.lower().unique().tolist()
+
+#     col1, col2, col3 = st.columns(3)
+#     with col1:
+#         x_axis = st.selectbox("Select X-axis:", options, index=options.index('DRUG_CONCENTRATION'))
+#     with col2:
+#         y_axis = st.selectbox("Select Y-axis:", options, index=options.index('SURVIVAL_RATE_PERCENT'))
+#     with col3:
+#         filter_type = st.radio("Filter by:", ["Drugs", "Cell Lines"], index=0, key="filter_type")
+        
+#     if filter_type == "Drugs":
+#         selected_value = st.selectbox("Select drug:", drugs)
+#     else:
+#         selected_value = st.selectbox("Select cell line:", cell_lines) 
+
+#     if st.button("Create your plot :bar_chart:"):
+#         with st.spinner("Creating your plot..."):
+#             if filter_type == "Drugs":
+#                 filtered_df = df[df['DRUG_NAME'] == selected_value] 
+#                 color_by = 'CELL_LINE_NAME'
+#                 title = f"Drug: {selected_value} - Survival Rate vs Drug Concentration"
+#                 legend_title = "Cell Lines"
+#             else:
+#                 filtered_df = df[df['CELL_LINE_NAME'] == selected_value]
+#                 color_by = 'DRUG_NAME'
+#                 title = f"Cell Line: {selected_value} - Survival Rate vs Drug Concentration"
+#                 legend_title = "Drugs"
+
+#             fig = px.scatter(
+#                 filtered_df,
+#                 x=x_axis,
+#                 y=y_axis,
+#                 color=color_by,
+#                 hover_data=['DRUG_NAME', 'CELL_LINE_NAME']
+#             )
+#             fig.update_layout(
+#                 title=title,
+#                 xaxis_title=x_axis,
+#                 yaxis_title=y_axis,
+#                 legend_title=legend_title
+#             )
+#             st.plotly_chart(fig)
+#             st.session_state['plot_created'] = True

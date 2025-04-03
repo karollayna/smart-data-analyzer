@@ -3,6 +3,7 @@ import streamlit as st
 import boto3
 from datetime import datetime
 import snowflake.connector
+import time
 
 def upload_user_files():
     # upload user files
@@ -111,7 +112,21 @@ def connect_with_snowflake():
         schema=snowflake_schema,
     )
 
-    results = "SELECT * FROM experiment1_survival"
-    df = pd.read_sql(results, conn)
+    return conn
+
+def refresh_snowpipe(pipe_name):
+    conn = connect_with_snowflake()
+    cur = conn.cursor()
+    cur.execute(f"ALTER PIPE {pipe_name} REFRESH;")
     conn.close()
-    return df
+    return "PIPE refreshed!"
+
+def fetch_data(table_name):
+    conn = connect_with_snowflake()
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM {table_name};")
+    rows = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
+    cur.close()
+    conn.close()
+    return columns, pd.DataFrame(rows, columns=columns)
