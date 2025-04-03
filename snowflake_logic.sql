@@ -4,11 +4,13 @@ USE DATABASE database_smart_data_analyzer;
 
 CREATE OR REPLACE TABLE dim_cell_lines(
 	cell_line_code VARCHAR(20) PRIMARY KEY UNIQUE,
-    cell_line_name VARCHAR(50) NOT NULL UNIQUE);
+    cell_line_name VARCHAR(50) NOT NULL UNIQUE,
+    user_id VARCHAR(20));
     
 CREATE OR REPLACE TABLE dim_drugs(
 	drug_code VARCHAR(20) PRIMARY KEY UNIQUE,
-    drug_name VARCHAR(50) NOT NULL UNIQUE);
+    drug_name VARCHAR(50) NOT NULL UNIQUE,
+     user_id VARCHAR(20));
 
 CREATE OR REPLACE TABLE fac_results(
 	experiment_id INT PRIMARY KEY UNIQUE,
@@ -28,8 +30,10 @@ CREATE OR REPLACE TABLE fac_results(
     result_009 INT,
     result_010 INT,
     result_011 INT,
-    result_012 INT
+    result_012 INT,
+    user_id VARCHAR(20)
 );
+
 
 CREATE STORAGE INTEGRATION smart_data_analyzer_bucket
     TYPE = EXTERNAL_STAGE
@@ -49,8 +53,6 @@ CREATE OR REPLACE STAGE aws_ext_stage_integration
     STORAGE_INTEGRATION = smart_data_analyzer_bucket
     URL = 's3://smart-data-analyzer-bucket'
     FILE_FORMAT = my_csv_format;
-
-list @aws_ext_stage_integration;
 
 CREATE OR REPLACE PIPE update_dim_cell_lines
     AUTO_INGEST = TRUE
@@ -72,11 +74,38 @@ CREATE OR REPLACE PIPE update_fac_results
 FROM @aws_ext_stage_integration
 PATTERN = '.*results.*\.csv'
 FILE_FORMAT = MY_CSV_FORMAT;
-select SYSTEM$PIPE_STATUS('update_fac_results');
+
 alter pipe update_dim_cell_lines refresh;
 alter pipe update_dim_drugs refresh;
 alter pipe update_fac_results refresh;
 
-select * from dim_cell_lines;
-select * from dim_drugs;
-select * from fac_results;
+CREATE OR REPLACE VIEW combined_results
+AS
+SELECT
+    f.experiment_id,
+    f.experiment_number,
+    f.user_id,
+    c.CELL_LINE_NAME,
+    d.DRUG_NAME,
+    f.treatment_time,
+    f.drug_concentration,
+    f.result_001,
+    f.result_002,
+    f.result_003,
+    f.result_004,
+    f.result_005,
+    f.result_006,
+    f.result_007,
+    f.result_008,
+    f.result_009,
+    f.result_010,
+    f.result_011,
+    f.result_012
+FROM
+    fac_results f
+LEFT JOIN 
+    dim_cell_lines c
+    ON f.CELL_LINE_CODE = c.CELL_LINE_CODE
+LEFT JOIN 
+    dim_drugs d
+    ON f.DRUG_CODE = d.DRUG_CODE;
