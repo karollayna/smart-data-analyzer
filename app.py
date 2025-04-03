@@ -84,20 +84,16 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
     }
 
     for table, pipe in tables_pipes.items():
-        if st.button(f'Refresh data  {table}'):
-            with st.spinner(f'Refreshing data {table}'):
-                backend.refresh_snowpipe(pipe)
-                time.sleep(30) 
-                columns, data = backend.fetch_data(table)
-                users_data = pd.DataFrame(data, columns=columns)
+        with st.spinner(f'Refreshing data {table}', show_time=True):
+            backend.refresh_snowpipe(pipe)
+            time.sleep(15) 
+            columns, data = backend.fetch_data(table)
+            users_data = pd.DataFrame(data, columns=columns)
 
-                st.session_state["data"][table] = users_data
-                st.session_state["data_updated"] = True
-                st.success(f"Data from {table} updated!")
-
-                for table, data in st.session_state["data"].items():
-                    with st.expander(f"{table}"):
-                        st.write(data)
+            st.session_state["data"][table] = users_data
+            st.session_state["data_updated"] = True
+            st.success(f"Data from {table} updated!")
+            st.write(users_data)
 
 # if st.session_state['data_updated'] and not st.session_state['parameters_for_plot_selected']:
 #     st.subheader("Select parameters for your plot")
