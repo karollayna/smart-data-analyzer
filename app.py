@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import backend
+import uuid
 import plotly.express as px
 import time
 
@@ -38,6 +39,7 @@ st.markdown(
 )
 
 if "data_uploaded" not in st.session_state:
+    st.session_state['user_id'] = None
     st.session_state["data_uploaded"] = False
     st.session_state["snowflake_connected"] = False
     st.session_state["data_updated"] = False
@@ -45,6 +47,15 @@ if "data_uploaded" not in st.session_state:
     st.session_state['parameters_for_plot_selected'] = False
     st.session_state['plot_created'] = False
 
+if st.session_state['user_id'] is None:
+    full_uuid = uuid.uuid4()
+    hex_uuid = full_uuid.hex
+    st.session_state['user_id'] = hex_uuid[:10]
+
+with st.container():
+    st.write(f"**Your Unique ID:** {st.session_state['user_id']}")
+    st.markdown(f"<h2 style='background-color:lightblue; border:1px solid black; padding:5px; border-radius:5px;'>{st.session_state['user_id']}</h2>", unsafe_allow_html=True)
+    st.write("Please save this ID as it will be needed later in the application.")
 
 if not st.session_state["data_uploaded"]:
     uploaded_files = backend.upload_user_files()
@@ -58,7 +69,7 @@ if not st.session_state["data_uploaded"]:
                         st.success(
                             ":white_check_mark: Your data has been saved to the cloud."
                         )
-                        st.session_state["data_uploaded"] = True
+                        st.session_state["data_uploaded"] = True    
                     
 if st.session_state["data_uploaded"] and not st.session_state['snowflake_connected']:
     with st.spinner('Connecting with Snowflake...'):
@@ -75,16 +86,18 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
     for table, pipe in tables_pipes.items():
         if st.button(f'Refresh data  {table}'):
             with st.spinner(f'Refreshing data {table}'):
-                time.sleep(20)
                 backend.refresh_snowpipe(pipe)
+                time.sleep(30) 
                 columns, data = backend.fetch_data(table)
-                st.session_state["data"][table] = data
+                users_data = pd.DataFrame(data, columns=columns)
+
+                st.session_state["data"][table] = users_data
                 st.session_state["data_updated"] = True
                 st.success(f"Data from {table} updated!")
-                
-    for table, data in st.session_state["data"].items():
-        with st.expander(f"{table}"):
-            st.write(data)
+
+                for table, data in st.session_state["data"].items():
+                    with st.expander(f"{table}"):
+                        st.write(data)
 
 # if st.session_state['data_updated'] and not st.session_state['parameters_for_plot_selected']:
 #     st.subheader("Select parameters for your plot")

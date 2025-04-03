@@ -66,8 +66,14 @@ def validate_user_data(uploaded_files):
                 )
                 continue
 
-            valid_files.append((uploaded_file.name, uploaded_file.getvalue()))
+            user_data['user_id'] = st.session_state['user_id']
+            
+            temp_file = f"temp_{uploaded_file.name}"
+            user_data.to_csv(temp_file, index=False)
+
+            valid_files.append((temp_file, open(temp_file, 'rb').read()))
             st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
+    
     return valid_files
 
 
@@ -118,6 +124,7 @@ def refresh_snowpipe(pipe_name):
     conn = connect_with_snowflake()
     cur = conn.cursor()
     cur.execute(f"ALTER PIPE {pipe_name} REFRESH;")
+    time.sleep(30)
     conn.close()
     return "PIPE refreshed!"
 
