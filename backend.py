@@ -137,3 +137,16 @@ def fetch_data(table_name):
     cur.close()
     conn.close()
     return columns, pd.DataFrame(rows, columns=columns)
+
+def fetch_full_data(view_name, user_id):
+    conn = connect_with_snowflake()
+    cur = conn.cursor()
+    query = f"SELECT DISTINCT * FROM {view_name} WHERE USER_ID = %s"
+    cur.execute(query, (user_id,))
+    result = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
+    cur.close()
+    conn.close()
+    df = pd.DataFrame(result, columns=columns)
+    
+    return df

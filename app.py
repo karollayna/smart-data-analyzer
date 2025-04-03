@@ -93,7 +93,13 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
             st.session_state["data"][table] = users_data
             st.session_state["data_updated"] = True
             st.success(f"Data from {table} updated!")
-            st.write(users_data)
+
+    fac_results = st.session_state["data"]["fac_results"]
+    cell_lines = st.session_state["data"]["dim_cell_lines"]
+    drugs = st.session_state["data"]["dim_drugs"]
+
+    results = backend.fetch_full_data("combined_results", st.session_state['user_id'])
+    st.write(results)
 
 # if st.session_state['data_updated'] and not st.session_state['parameters_for_plot_selected']:
 #     st.subheader("Select parameters for your plot")
