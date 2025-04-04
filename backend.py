@@ -4,6 +4,7 @@ import boto3
 from datetime import datetime
 import snowflake.connector
 import time
+import yaml
 
 def upload_user_files():
     # upload user files
@@ -76,13 +77,17 @@ def validate_user_data(uploaded_files):
     
     return valid_files
 
+def load_secrets(file_path):
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file)
 
 def upload_files_to_s3(valid_files):
 
-    s3_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
-    key_id = st.secrets["AWS_ACCESS_KEY_ID"]
-    bucket_name = st.secrets["S3_BUCKET_NAME"]
-    region_name = st.secrets["AWS_DEFAULT_REGION"]
+    secrets = load_secrets("secrets.yaml")
+    s3_secret_key = secrets["aws_secret_access_key"]
+    key_id = secrets["aws_access_key_id"]
+    bucket_name = secrets["s3_bucket_name"]
+    region_name = secrets["aws_default_region"]
     s3_user = boto3.client(
         "s3",
         aws_access_key_id=key_id,
@@ -101,13 +106,13 @@ def upload_files_to_s3(valid_files):
 
 
 def connect_with_snowflake():
-
-    snowflake_account = st.secrets["SNOWFLAKE_ACCOUNT"]
-    snowflake_user = st.secrets["SNOWFLAKE_USER"]
-    snowflake_password = st.secrets["SNOWFLAKE_PASSWORD"]
-    snowflake_warehouse = st.secrets["SNOWFLAKE_WAREHOUSE"]
-    snowflake_database = st.secrets["SNOWFLAKE_DATABASE"]
-    snowflake_schema = st.secrets["SNOWFLAKE_SCHEMA"]
+    secrets = load_secrets("secrets.yaml")
+    snowflake_account = secrets["snowflake_account"]
+    snowflake_user = secrets["snowflake_user"]
+    snowflake_password = secrets["snowflake_password"]
+    snowflake_warehouse = secrets["snowflake_warehouse"]
+    snowflake_database = secrets["snowflake_database"]
+    snowflake_schema = secrets["snowflake_schema"]
 
     conn = snowflake.connector.connect(
         user=snowflake_user,
