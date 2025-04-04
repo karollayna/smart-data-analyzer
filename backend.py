@@ -66,13 +66,13 @@ def validate_user_data(uploaded_files):
                 )
                 continue
 
-            user_data['user_id'] = st.session_state['user_id']
-            
-            temp_file = f"temp_{uploaded_file.name}"
-            user_data.to_csv(temp_file, index=False)
+        user_data['user_id'] = st.session_state['user_id']
+        
+        temp_file = f"temp_{uploaded_file.name}"
+        user_data.to_csv(temp_file, index=False)
 
-            valid_files.append((temp_file, open(temp_file, 'rb').read()))
-            st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
+        valid_files.append((temp_file, open(temp_file, 'rb').read()))
+        st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
     
     return valid_files
 
@@ -124,7 +124,7 @@ def refresh_snowpipe(pipe_name):
     conn = connect_with_snowflake()
     cur = conn.cursor()
     cur.execute(f"ALTER PIPE {pipe_name} REFRESH;")
-    time.sleep(30)
+    time.sleep(10)
     conn.close()
     return "PIPE refreshed!"
 
@@ -137,3 +137,55 @@ def fetch_data(table_name):
     cur.close()
     conn.close()
     return columns, pd.DataFrame(rows, columns=columns)
+
+def fetch_full_data(view_name, user_id):
+    conn = connect_with_snowflake()
+    cur = conn.cursor()
+    query = f"SELECT DISTINCT * FROM {view_name} WHERE USER_ID = %s"
+    cur.execute(query, (user_id,))
+    result = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
+    cur.close()
+    conn.close()
+    df = pd.DataFrame(result, columns=columns)
+    
+    return df
+
+
+def fetch_experiment_data(data, experiment_number):
+
+    df = pd.DataFrame(data)
+    experiment_data = df[df['EXPERIMENT_NUMBER'] == experiment_number]
+    
+    return experiment_data
+
+
+def analyze_experiment_data(experiment_data):
+  
+    results_columns = [col for col in experiment_data.columns if col.startswith('RESULT_')]
+    
+    experiment_data['MEAN'] = experiment_data[results_columns].mean(axis=1, skipna=True).round(2)
+    experiment_data['STD'] = experiment_data[results_columns].std(axis=1, skipna=True).round(2)
+    
+    controls = experiment_data[(experiment_data['TREATMENT_TIME'] == 0) & (experiment_data['DRUG_CONCENTRATION'] == 0)]
+    control_means = controls.groupby(['DRUG_NAME', 'CELL_LINE_NAME'])['MEAN'].mean().reset_index()
+
+    return experiment_data, control_means
+
+
+def calculate_survival(experiment_data, control_means):
+    def calculate_survival_row(row):
+        control_key = (row['DRUG_NAME'], row['CELL_LINE_NAME'])
+        control_mean = control_means[(control_means['DRUG_NAME'] == control_key[0]) & (control_means['CELL_LINE_NAME'] == control_key[1])]['MEAN'].values[0]
+        
+        if control_mean == 0:
+            control_mean = 1 
+        
+        survival = ((row['MEAN'] / control_mean) * 100)
+        survival = round(survival, 2)
+
+        return survival
+    
+    experiment_data['SURVIVAL_RATE'] = experiment_data.apply(calculate_survival_row, axis=1)
+    
+    return experiment_data

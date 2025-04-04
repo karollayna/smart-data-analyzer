@@ -4,3 +4,4 @@ user_data/
 create_database.sql
 create_view.sql
 karollayna_accessKeys.csv
+data_analysis/
