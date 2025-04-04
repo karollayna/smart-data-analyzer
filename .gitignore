@@ -4,3 +4,4 @@ create_view.sql
 karollayna_accessKeys.csv
 data_analysis/
 secrets.yaml
+__pycache__/

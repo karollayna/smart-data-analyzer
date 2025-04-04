@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
-import backend
 import uuid
 import plotly.express as px
 import time
+import data_handler
+from aws import aws_handler
+from snow import snow_handler
 
 st.title(
     """
@@ -60,13 +62,13 @@ with st.container():
     st.write("Please save this ID as it will be needed later in the application.")
 
 if not st.session_state["data_uploaded"]:
-    uploaded_files = backend.upload_user_files()
+    uploaded_files = data_handler.upload_user_files()
     if uploaded_files:
-        valid_files = backend.validate_user_data(uploaded_files)
+        valid_files = data_handler.validate_user_data(uploaded_files)
         if valid_files:
             if st.button("Save your data :cloud:"):
                 with st.spinner("Uploading your data to the cloud..."):
-                    uploaded_files = backend.upload_files_to_s3(valid_files)
+                    uploaded_files = aws_handler.upload_files_to_s3(valid_files)
                     if uploaded_files:
                         st.success(
                             ":white_check_mark: Your data has been saved to the cloud."
@@ -75,7 +77,7 @@ if not st.session_state["data_uploaded"]:
                     
 if st.session_state["data_uploaded"] and not st.session_state['snowflake_connected']:
     with st.spinner('Connecting with Snowflake...'):
-        conn = backend.connect_with_snowflake()
+        conn = snow_handler.connect_with_snowflake()
         st.session_state['snowflake_connected'] = True
 
 if st.session_state['snowflake_connected'] and not st.session_state['data_updated']:
@@ -87,9 +89,9 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
 
     for table, pipe in tables_pipes.items():
         with st.spinner(f'Refreshing data {table}', show_time=True):
-            backend.refresh_snowpipe(pipe)
+            snow_handler.refresh_snowpipe(pipe)
             time.sleep(10) 
-            columns, data = backend.fetch_data(table)
+            columns, data = snow_handler.fetch_data(table)
             users_data = pd.DataFrame(data, columns=columns)
 
             st.session_state["data"][table] = users_data
@@ -101,7 +103,7 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
     drugs = st.session_state["data"]["dim_drugs"]
 
     with st.spinner('Loading your data to table...'):
-        results = backend.fetch_full_data("combined_results", st.session_state['user_id'])
+        results = snow_handler.fetch_full_data("combined_results", st.session_state['user_id'])
         st.write(results)
 
         st.session_state['data'] = results
@@ -113,9 +115,9 @@ if st.session_state['data_updated'] and not st.session_state['data_analyzed']:
 
     if number is not None:
         with st.spinner('Analyzing your data...'):
-            experiment_data = backend.fetch_experiment_data(data = df, experiment_number = number)
-            experiment_data_analyzed, control_means = backend.analyze_experiment_data(experiment_data)
-            user_result = backend.calculate_survival(experiment_data_analyzed, control_means)
+            experiment_data = data_handler.fetch_experiment_data(data = df, experiment_number = number)
+            experiment_data_analyzed, control_means = data_handler.analyze_experiment_data(experiment_data)
+            user_result = data_handler.calculate_survival(experiment_data_analyzed, control_means)
 
             st.subheader("Select parameters for your plot")
             
