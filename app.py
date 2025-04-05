@@ -60,7 +60,7 @@ if st.session_state['user_id'] is None:
 
 with st.container():
     st.write(f"**Your Unique ID:** {st.session_state['user_id']}")
-    st.markdown(f"<h2 style='background-color:lightblue; border:1px solid black; padding:5px; border-radius:5px;'>{st.session_state['user_id']}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='background-color:lightgreen; border:1px solid black; padding:5px; border-radius:5px;'>{st.session_state['user_id']}</h2>", unsafe_allow_html=True)
     st.write("Please save this ID as it will be needed later in the application.")
 
 aws_handler = AWSHandler()
@@ -145,33 +145,7 @@ if st.session_state['data_updated'] and not st.session_state['data_analyzed']:
 
         if st.button("Create your plot :bar_chart:"):
             with st.spinner("Creating your plot..."):
-                if filter_type == "Drugs":
-                    filtered_df = user_result[user_result['DRUG_NAME'] == selected_value] 
-                    color_by = 'CELL_LINE_NAME'
-                    title = f"Drug: {selected_value} - Survival Rate vs Drug Concentration"
-                    legend_title = "Cell Lines"
-                else:
-                    filtered_df = user_result[user_result['CELL_LINE_NAME'] == selected_value]
-                    color_by = 'DRUG_NAME'
-                    title = f"Cell Line: {selected_value} - Survival Rate vs Drug Concentration"
-                    legend_title = "Drugs"
-
-                for time in treatment_times:
-                    df_subset = user_result[user_result['TREATMENT_TIME'] == time]
-                    
-                    fig = px.scatter(
-                        df_subset,
-                        x=x_axis,
-                        y=y_axis,
-                        color=color_by,
-                        hover_data=['DRUG_NAME', 'CELL_LINE_NAME'],
-                        title=f"Results for treatment time: {time}min"
-                    )
-                    fig.update_layout(
-                        xaxis_title=x_axis,
-                        yaxis_title=y_axis,
-                        legend_title=legend_title
-                    )
-                    
+                figures = data_handler.create_plots(user_result, filter_type, selected_value, x_axis, y_axis, treatment_times)
+                for fig in figures:
                     st.plotly_chart(fig)
-                    st.session_state['plot_created'] = True
+                st.session_state['plot_created'] = True

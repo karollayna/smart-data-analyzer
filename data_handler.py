@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 class DataHandler:
     """
@@ -184,3 +185,55 @@ class DataHandler:
         experiment_data['SURVIVAL_RATE'] = experiment_data.apply(calculate_survival_row, axis=1)
         
         return experiment_data
+    
+    def create_plots(self, user_result, filter_type, selected_value, x_axis, y_axis, treatment_times):
+        """
+    Creates a list of scatter plots based on the filtered data.
+
+    Parameters:
+    - user_result (DataFrame): The DataFrame containing the user's results.
+    - filter_type (str): The type of filter to apply, either "Drugs" or "CELL_LINE_NAME".
+    - selected_value (str): The value to filter by.
+    - x_axis (str): The column name for the x-axis.
+    - y_axis (str): The column name for the y-axis.
+    - treatment_times (list): A list of treatment times to create plots for.
+
+    Returns:
+    - figures (list): A list of Plotly figures.
+    """
+        # Determine the filter criteria and plot settings based on the filter type
+        if filter_type == "Drugs":
+            # Filter by drug name
+            filtered_df = user_result[user_result['DRUG_NAME'] == selected_value] 
+            color_by = 'CELL_LINE_NAME'
+            title = f"Survival Rate vs Drug Concentration, drug: {selected_value}"
+            legend_title = "Cell Lines"
+        else:
+            # Filter by cell line name
+            filtered_df = user_result[user_result['CELL_LINE_NAME'] == selected_value]
+            color_by = 'DRUG_NAME'
+            title = f"Survival Rate vs Drug Concentration, cell line: {selected_value}"
+            legend_title = "Drugs"
+
+        figures = []
+        for time in treatment_times:
+            # Filter the data for the current treatment time
+            df_subset = filtered_df[filtered_df['TREATMENT_TIME'] == time]
+            
+            fig = px.scatter(
+                df_subset,
+                x=x_axis,
+                y=y_axis,
+                color=color_by,
+                hover_data=['DRUG_NAME', 'CELL_LINE_NAME'],
+                title=f"{title} for treatment time: {time}min"
+            )
+            fig.update_layout(
+                xaxis_title=x_axis,
+                yaxis_title=y_axis,
+                legend_title=legend_title
+            )
+            
+            figures.append(fig)
+        
+        return figures
