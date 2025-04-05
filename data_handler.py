@@ -193,7 +193,7 @@ class DataHandler:
 
         Parameters:
         - user_result (DataFrame): The DataFrame containing the user's results.
-        - filter_type (str): The type of filter to apply, either "Drugs" or "CELL_LINE_NAME".
+        - filter_type (str): The type of filter to apply, either "DRUG_NAME" or "CELL_LINE_NAME".
         - selected_value (str): The value to filter by.
         - x_axis (str): The column name for the x-axis.
         - y_axis (str): The column name for the y-axis.
