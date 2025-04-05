@@ -5,6 +5,9 @@ from utils import load_secrets
 
 class AWSHandler:
     def __init__(self):
+        """
+        Initializes the AWSHandler with credentials from secrets.
+        """
         secrets = load_secrets("secrets.yaml")
         self.s3_secret_key = secrets["aws_secret_access_key"]
         self.key_id = secrets["aws_access_key_id"]
