@@ -1,11 +1,9 @@
 import streamlit as st
-import pandas as pd
-import uuid
-import plotly.express as px
-import time
 from data_handler import DataHandler
 from aws.aws_handler import AWSHandler
 from snow.snow_handler import SnowflakeHandler
+import uuid
+import pandas as pd
 
 st.title(
     """
@@ -41,6 +39,8 @@ st.markdown(
 )
 
 data_handler = DataHandler()
+aws_handler = AWSHandler()
+snow_handler = SnowflakeHandler() 
 
 if "data_uploaded" not in st.session_state:
     st.session_state['user_id'] = None
@@ -49,21 +49,19 @@ if "data_uploaded" not in st.session_state:
     st.session_state["data_updated"] = False
     st.session_state["data_analyzed"] = False
     st.session_state['data'] = {}
-    st.session_state['data_after_analysis'] = None
-    st.session_state['parameters_for_plot_selected'] = False
     st.session_state['plot_created'] = False
 
 if st.session_state['user_id'] is None:
+    # generate a unique user ID
     full_uuid = uuid.uuid4()
     hex_uuid = full_uuid.hex
     st.session_state['user_id'] = hex_uuid[:10]
 
 with st.container():
     st.write(f"**Your Unique ID:** {st.session_state['user_id']}")
-    st.markdown(f"<h2 style='background-color:lightgreen; border:1px solid black; padding:5px; border-radius:5px;'>{st.session_state['user_id']}</h2>", unsafe_allow_html=True)
     st.write("Please save this ID as it will be needed later in the application.")
 
-aws_handler = AWSHandler()
+
 if not st.session_state["data_uploaded"]:
     uploaded_files = data_handler.upload_user_files()
     if uploaded_files:
@@ -78,7 +76,7 @@ if not st.session_state["data_uploaded"]:
                         )
                         st.session_state["data_uploaded"] = True 
 
-snow_handler = SnowflakeHandler()                    
+                   
 if st.session_state["data_uploaded"] and not st.session_state['snowflake_connected']:
     with st.spinner('Connecting with Snowflake...'):
         conn = snow_handler.connect_with_snowflake()
@@ -94,6 +92,7 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
     for table, pipe in tables_pipes.items():
         with st.spinner(f'Refreshing data {table}', show_time=True):
             snow_handler.refresh_snowpipe(pipe)
+            import time
             time.sleep(10) 
             columns, data = snow_handler.fetch_data(table)
             users_data = pd.DataFrame(data, columns=columns)
@@ -105,23 +104,22 @@ if st.session_state['snowflake_connected'] and not st.session_state['data_update
     fac_results = st.session_state["data"]["fac_results"]
     cell_lines = st.session_state["data"]["dim_cell_lines"]
     drugs = st.session_state["data"]["dim_drugs"]
-
-    with st.spinner('Loading your data to table...'):
-        results = snow_handler.fetch_full_data("combined_results", st.session_state['user_id'])
-        st.write(results)
-
-        st.session_state['data'] = results
+    results = snow_handler.fetch_full_data("combined_results", st.session_state['user_id'])
+    st.session_state['data'] = results
 
 if st.session_state['data_updated'] and not st.session_state['data_analyzed']:
     
     df = st.session_state['data']
-    number = st.number_input("Insert a number", value = None, step = 1, min_value = 1)
+    number = st.number_input("Insert experiment number", value = None, step = 1, min_value = 1)
 
     if number is not None:
         with st.spinner('Analyzing your data...'):
             experiment_data = data_handler.fetch_experiment_data(data = df, experiment_number = number)
-            experiment_data_analyzed, control_means = data_handler.analyze_experiment_data(experiment_data)
-            user_result = data_handler.calculate_survival(experiment_data_analyzed, control_means)
+            experiment_data_analyzed, control_means, full_experiment_data = data_handler.analyze_experiment_data(experiment_data)
+            user_result = data_handler.calculate_survival(full_experiment_data)
+
+            with st.expander("Analysis Results:"):
+                st.write(user_result)
 
             st.subheader("Select parameters for your plot")
             

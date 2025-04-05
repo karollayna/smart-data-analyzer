@@ -144,6 +144,8 @@ class DataHandler:
             The DataFrame with added 'MEAN' and 'STD' columns.
         control_means : DataFrame
             A DataFrame containing mean values for control groups.
+        full_experiment_data : DataFrame
+            The DataFrame with merged experiment data and control means.
         """
         results_columns = [col for col in experiment_data.columns if col.startswith('RESULT_')]
         
@@ -153,38 +155,37 @@ class DataHandler:
         controls = experiment_data[(experiment_data['TREATMENT_TIME'] == 0) & (experiment_data['DRUG_CONCENTRATION'] == 0)]
         control_means = controls.groupby(['DRUG_NAME', 'CELL_LINE_NAME'])['MEAN'].mean().reset_index()
 
-        return experiment_data, control_means
+        full_experiment_data = experiment_data.merge(control_means, on=['DRUG_NAME', 'CELL_LINE_NAME'], suffixes=('', '_CONTROL'))
 
-    def calculate_survival(self, experiment_data, control_means):
+        return experiment_data, control_means, full_experiment_data
+    
+    def calculate_survival(self, full_experiment_data):
         """
         Calculates the survival rate based on mean values and control means.
 
         Parameters:
         ----------
-        experiment_data : DataFrame
-            The DataFrame containing experiment data.
-        control_means : DataFrame
-            A DataFrame containing mean values for control groups.
+        full_experiment_data : DataFrame
+            The DataFrame containing merged experiment data and control means.
 
         Returns:
         -------
-        experiment_data : DataFrame
+        full_experiment_data : DataFrame
             The DataFrame with an added 'SURVIVAL_RATE' column.
         """
-        def calculate_survival_row(row):
-            control_key = (row['DRUG_NAME'], row['CELL_LINE_NAME'])
-            control_mean = control_means[(control_means['DRUG_NAME'] == control_key[0]) & (control_means['CELL_LINE_NAME'] == control_key[1])]['MEAN'].values[0]
-            
-            if control_mean == 0:
-                control_mean = 1 
         
-            survival = ((row['MEAN'] / control_mean) * 100)
+        def calculate_survival_row(row):
+            if row['MEAN_CONTROL'] == 0:
+                survival = 0  # lub inna wartość, jeśli chcesz uniknąć dzielenia przez zero
+            else:
+                survival = ((row['MEAN'] / row['MEAN_CONTROL']) * 100)
+            
             survival = round(survival, 2)
             return survival
-        
-        experiment_data['SURVIVAL_RATE'] = experiment_data.apply(calculate_survival_row, axis=1)
-        
-        return experiment_data
+
+        full_experiment_data['SURVIVAL_RATE'] = full_experiment_data.apply(calculate_survival_row, axis=1)
+
+        return full_experiment_data
     
     def create_plots(self, user_result, filter_type, selected_value, x_axis, y_axis, treatment_times):
         """
