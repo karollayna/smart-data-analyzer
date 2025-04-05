@@ -5,3 +5,4 @@ karollayna_accessKeys.csv
 data_analysis/
 secrets.yaml
 __pycache__/
+.__pycache__/
