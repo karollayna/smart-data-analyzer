@@ -3,7 +3,7 @@ import pandas as pd
 import uuid
 import plotly.express as px
 import time
-import data_handler
+from data_handler import DataHandler
 from aws import aws_handler
 from snow import snow_handler
 
@@ -39,6 +39,8 @@ st.markdown(
 **Note:** The number of `result` columns is fixed at 12.
 """,
 )
+
+data_handler = DataHandler()
 
 if "data_uploaded" not in st.session_state:
     st.session_state['user_id'] = None
