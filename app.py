@@ -4,7 +4,7 @@ import uuid
 import plotly.express as px
 import time
 from data_handler import DataHandler
-from aws import aws_handler
+from aws.aws_handler import AWSHandler
 from snow import snow_handler
 
 st.title(
@@ -63,6 +63,7 @@ with st.container():
     st.markdown(f"<h2 style='background-color:lightblue; border:1px solid black; padding:5px; border-radius:5px;'>{st.session_state['user_id']}</h2>", unsafe_allow_html=True)
     st.write("Please save this ID as it will be needed later in the application.")
 
+aws_handler = AWSHandler()
 if not st.session_state["data_uploaded"]:
     uploaded_files = data_handler.upload_user_files()
     if uploaded_files:
