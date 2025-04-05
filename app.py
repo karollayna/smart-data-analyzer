@@ -5,7 +5,7 @@ import plotly.express as px
 import time
 from data_handler import DataHandler
 from aws.aws_handler import AWSHandler
-from snow import snow_handler
+from snow.snow_handler import SnowflakeHandler
 
 st.title(
     """
@@ -76,8 +76,9 @@ if not st.session_state["data_uploaded"]:
                         st.success(
                             ":white_check_mark: Your data has been saved to the cloud."
                         )
-                        st.session_state["data_uploaded"] = True    
-                    
+                        st.session_state["data_uploaded"] = True 
+
+snow_handler = SnowflakeHandler()                    
 if st.session_state["data_uploaded"] and not st.session_state['snowflake_connected']:
     with st.spinner('Connecting with Snowflake...'):
         conn = snow_handler.connect_with_snowflake()
