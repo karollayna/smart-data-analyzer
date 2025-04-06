@@ -99,11 +99,7 @@ class DataHandler:
                     continue
 
             user_data['user_id'] = st.session_state['user_id']
-            
-            temp_file = f"temp_{uploaded_file.name}"
-            user_data.to_csv(temp_file, index=False)
-
-            self.valid_files.append((temp_file, open(temp_file, 'rb').read()))
+            self.valid_files.append((uploaded_file.name, user_data.to_csv(index=False).encode()))
             st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
     
         return self.valid_files
