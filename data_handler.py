@@ -68,15 +68,15 @@ class DataHandler:
         """
         Validates the uploaded files against expected file names and column structures.
 
-        Parameters:
+        Parameters
         ----------
         uploaded_files : list
-            A list of files uploaded by the user.
+            A list of files uploaded by the user via Streamlit's file uploader.
 
-        Returns:
+        Returns
         -------
-        valid_files : list
-            A list of valid files after validation.
+        list of tuple
+            A list of valid files, where each item is a tuple (file_name, file_content_bytes).
         """
         for uploaded_file in uploaded_files:
             if uploaded_file.name not in self.expected_files:
