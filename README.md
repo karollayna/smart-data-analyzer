@@ -1,7 +1,7 @@
-# Smart-Data-Analyzer
-designed to make it easy for you to create graphs from your data. 
+# ✨ Smart-Data-Analyzer ✨
+designed to make it easy for you to create graphs from your data. 📊
 
-## Technologies
+## 🚀 Technologies
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-%2300FF00.svg?style=for-the-badge&logo=streamlit&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
@@ -12,13 +12,13 @@ designed to make it easy for you to create graphs from your data.
 
 # 📦 Streamlit App
 
-here will be link
+here will be link 🔗
 
-## Description
+## 📝 Description
 
 This application is intended for users who want to analyze data from photodynamic therapy experiments. It allows you to easily upload data and then analyze and visualize the results.
 
-## Requirements
+## 📁 Requirements
 
 **File Format:** `.csv`
 | File Name | Required Columns |
@@ -27,10 +27,10 @@ This application is intended for users who want to analyze data from photodynami
 | `data_photodynamic_therapy_drugs.csv` | `drug_code`, `drug_name` |
 | `data_photodynamic_therapy_results.csv` | `experiment_id`, `experiment_number`, `cell_line_code`, `treatment_time`, `drug_code`, `drug_concentration`, `result_001 - result_012` |
 
-## Project status
+## ⚙️ Project status
 
-The project is currently **in progress**
+The project is currently **in progress 🚘🔜**
 
-## Questions or suggestion
+## ❓ Questions or suggestion
 
-You can contact me for any questions or suggestions!
+Feel free to reach out with any questions or suggestions! 📧
