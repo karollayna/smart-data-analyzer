@@ -192,15 +192,20 @@ class DataHandler:
         Creates a list of scatter plots based on the filtered data.
 
         Parameters:
-        - user_result (DataFrame): The DataFrame containing the user's results.
-        - filter_type (str): The type of filter to apply, either "DRUG_NAME" or "CELL_LINE_NAME".
-        - selected_value (str): The value to filter by.
-        - x_axis (str): The column name for the x-axis.
-        - y_axis (str): The column name for the y-axis.
-        - treatment_times (list): A list of treatment times to create plots for.
+        - **user_result** (DataFrame): The DataFrame containing the user's results.
+        - **filter_type** (str): The type of filter to apply. Can be either "Drugs" or "CELL_LINE_NAME".
+        - **selected_value** (str): The value to filter by.
+        - **x_axis** (str): The column name for the x-axis.
+        - **y_axis** (str): The column name for the y-axis.
+        - **treatment_times** (list): A list of treatment times to create plots for. Each time should be in a format that can be sorted numerically (e.g., "0 min", "5 min", etc.).
 
         Returns:
-        - figures (list): A list of Plotly figures.
+        - **figures** (list): A list of Plotly figures, each representing a scatter plot for a specific treatment time.
+
+        Notes:
+        - The function first filters the data based on the specified filter type and value.
+        - It then sorts the treatment times in ascending order before creating the plots.
+        - If 'CELL_LINE_NAME' or 'DRUG_NAME' columns are present in the filtered data, they are used for coloring the points in the scatter plots.
         """
         if filter_type == "Drugs":
             # Filter by drug name
@@ -208,6 +213,9 @@ class DataHandler:
         else:
             # Filter by cell line name
             filtered_df = user_result[user_result['CELL_LINE_NAME'] == selected_value]
+
+        treatment_times = list(treatment_times)
+        treatment_times.sort(key=lambda x: int(x.split()[0]) if isinstance(x, str) else x)
 
         figures = []
         for time in treatment_times:
