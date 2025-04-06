@@ -1,7 +1,8 @@
-to_do.txt
-.streamlit/
 user_data/
 create_database.sql
 create_view.sql
 karollayna_accessKeys.csv
 data_analysis/
+secrets.yaml
+__pycache__/
+.__pycache__/
