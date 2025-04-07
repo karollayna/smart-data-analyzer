@@ -7,7 +7,8 @@ class SnowflakeHandler:
 
     def __init__(self):
         """
-        Initializes the SnowflakeHandler with credentials from secrets.
+        Initializes the SnowflakeHandler with credentials from secrets
+        and establishes a persistent connection.
         """
         self.account = secrets["snowflake_account"]
         self.user = secrets["snowflake_user"]
@@ -16,16 +17,7 @@ class SnowflakeHandler:
         self.database = secrets["snowflake_database"]
         self.schema = secrets["snowflake_schema"]
 
-    def connect_with_snowflake(self):
-        """
-        Establishes a connection to Snowflake using the provided credentials.
-
-        Returns:
-        -------
-        connection : snowflake.connector.connection
-            The established Snowflake connection.
-        """
-        return snowflake.connector.connect(
+        self.conn = snowflake.connector.connect(
             user=self.user,
             password=self.password,
             account=self.account,
@@ -33,10 +25,37 @@ class SnowflakeHandler:
             database=self.database,
             schema=self.schema,
         )
+
+    def truncate_staging_tables(self):
+        """
+        Truncates all staging tables before ingestion.
+        This clears previous data to ensure a clean load process.
+        """
+        queries = [
+            "TRUNCATE TABLE stg_cell_lines",
+            "TRUNCATE TABLE stg_drugs",
+            "TRUNCATE TABLE stg_results",
+        ]
+        with self.conn.cursor() as cur:
+            for query in queries:
+                cur.execute(query)
+
+    def call_procedure(self, procedure_name):
+        """
+        Calls a stored procedure in Snowflake.
+
+        Parameters:
+        ----------
+        procedure_name : str
+            The name of the procedure to call (e.g., 'merge_into_dim_drugs()').
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(f"CALL {procedure_name}")
+
     
     def refresh_snowpipe(self, pipe_name):
         """
-        Refreshes a specified Snowpipe.
+        Refreshes a specified Snowpipe to manually trigger file ingestion.
 
         Parameters:
         ----------
@@ -49,14 +68,25 @@ class SnowflakeHandler:
             True if the refresh operation was successful, False otherwise.
         """
         try:
-            with self.connect_with_snowflake() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(f"ALTER PIPE {pipe_name} REFRESH;")
+            with self.conn.cursor() as cur:
+                cur.execute(f"ALTER PIPE {pipe_name} REFRESH;")
             time.sleep(10)
             return True
         except Exception as e:
-            print(f"Error during communication with snowflake: {e}")
+            print(f"Error during communication with Snowflake: {e}")
             return False
+        
+    def reset_pipeline(self):
+        """
+        Truncates staging tables and refreshes all Snowpipes.
+        Useful to prepare the environment for a fresh ETL run.
+        """
+        self.truncate_staging_tables()
+        pipes = ["update_stg_cell_lines", "update_stg_drugs", "update_stg_results"]
+        for pipe in pipes:
+            success = self.refresh_snowpipe(pipe)
+            if not success:
+                print(f"Failed to refresh pipe: {pipe}")
         
     def fetch_data(self, table_name):
         """
@@ -69,44 +99,50 @@ class SnowflakeHandler:
 
         Returns:
         -------
-        tuple or None
-            A tuple containing the column names and a pandas DataFrame with the data, or None if an error occurs.
-        """
+        tuple
+            A tuple containing the list of column names and a DataFrame with the table's content.
+        """      
         try:
-            with self.connect_with_snowflake() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(f"SELECT * FROM {table_name};")
-                    rows = cur.fetchall()
-                    columns = [desc[0] for desc in cur.description]
-                    return columns, pd.DataFrame(rows, columns=columns)
+            with self.conn.cursor() as cur:
+                cur.execute(f"SELECT * FROM {table_name};")
+                rows = cur.fetchall()
+                columns = [desc[0] for desc in cur.description]
+                return columns, pd.DataFrame(rows, columns=columns)
         except Exception as e:
             print(f"Error fetching data from {table_name}: {e}")
             return None
 
     def fetch_full_data(self, view_name, user_id):
         """
-        Fetches distinct data from a specified view in Snowflake for a given user ID.
+        Fetches user-specific distinct data from a Snowflake view.
 
         Parameters:
         ----------
         view_name : str
-            The name of the view to fetch data from.
+            The name of the view to query.
         user_id : str or int
-            The ID of the user to filter data by.
+            The user ID to filter data by.
 
         Returns:
         -------
-        pandas.DataFrame or None
-            A pandas DataFrame with the fetched data, or None if an error occurs.
+        pd.DataFrame or None
+            A DataFrame with the filtered data, or None if the query fails.
         """
         try:
-            with self.connect_with_snowflake() as conn:
-                with conn.cursor() as cur:
-                    query = f"SELECT DISTINCT * FROM {view_name} WHERE USER_ID = %s"
-                    cur.execute(query, (user_id,))
-                    result = cur.fetchall()
-                    columns = [desc[0] for desc in cur.description]
-                    return pd.DataFrame(result, columns=columns)
+            with self.conn.cursor() as cur:
+                query = f"SELECT DISTINCT * FROM {view_name} WHERE USER_ID = %s"
+                cur.execute(query, (user_id,))
+                result = cur.fetchall()
+                columns = [desc[0] for desc in cur.description]
+                return pd.DataFrame(result, columns=columns)
         except Exception as e:
             print(f"Error fetching data from {view_name}: {e}")
             return None
+        
+    def close_connection(self):
+        """
+        Closes the Snowflake connection.
+        Should be called when done using the handler.
+        """
+        if self.conn:
+            self.conn.close()
