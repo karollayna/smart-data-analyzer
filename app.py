@@ -60,8 +60,6 @@ if st.session_state['user_id'] is None:
 
 with st.container():
     st.write(f"**Your Unique ID:** {st.session_state['user_id']}")
-    st.write("Please save this ID as it will be needed later in the application.")
-
 
 if not st.session_state["data_uploaded"]:
     uploaded_files = data_handler.upload_user_files()

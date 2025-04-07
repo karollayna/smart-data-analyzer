@@ -203,6 +203,9 @@ class DataHandler:
         - It then sorts the treatment times in ascending order before creating the plots.
         - If 'CELL_LINE_NAME' or 'DRUG_NAME' columns are present in the filtered data, they are used for coloring the points in the scatter plots.
         """
+        def format_axis_title(axis_name):
+            return axis_name.replace("_", " ").lower().capitalize()
+        
         if filter_type == "Drugs":
             # Filter by drug name
             filtered_df = user_result[user_result['DRUG_NAME'] == selected_value] 
@@ -225,18 +228,21 @@ class DataHandler:
             else:
                 color_col = None
 
+            x_axis_title = format_axis_title(x_axis)
+            y_axis_title = format_axis_title(y_axis)
+            
             fig = px.scatter(
                 df_subset,
                 x=x_axis,
                 y=y_axis,
                 color=color_col if color_col else None,
                 hover_data=['DRUG_NAME', 'CELL_LINE_NAME'],
-                title=f"{x_axis} vs {y_axis} for {selected_value} at {time} min"
+                title=f"{x_axis_title} vs {y_axis_title} for {selected_value} at {time} min"
             )
             
             fig.update_layout(
-                xaxis_title=x_axis,
-                yaxis_title=y_axis,
+                xaxis_title=x_axis_title,
+                yaxis_title=y_axis_title,
                 showlegend=True if color_col else False,
                 xaxis=dict(showgrid=True),
                 yaxis=dict(showgrid=True)
