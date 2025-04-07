@@ -27,6 +27,12 @@ This application is intended for users who want to analyze data from photodynami
 | `data_photodynamic_therapy_drugs.csv` | `drug_code`, `drug_name` |
 | `data_photodynamic_therapy_results.csv` | `experiment_id`, `experiment_number`, `cell_line_code`, `treatment_time`, `drug_code`, `drug_concentration`, `result_001 - result_012` |
 
+## 📈 Data Flow
+  ![Data Flow](images/data_flow.png)
+
+## 🗂️ Data Architecture
+  ![Data Architecture](images/data_architecture.png)
+
 ## ⚙️ Project status
 
 The project is currently **in progress 🚘🔜**

@@ -172,7 +172,7 @@ class DataHandler:
         
         def calculate_survival_row(row):
             if row['MEAN_CONTROL'] == 0:
-                survival = 0  # lub inna wartość, jeśli chcesz uniknąć dzielenia przez zero
+                survival = 0
             else:
                 survival = ((row['MEAN'] / row['MEAN_CONTROL']) * 100)
             
