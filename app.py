@@ -42,6 +42,7 @@ data_handler = DataHandler()
 aws_handler = AWSHandler()
 snow_handler = SnowflakeHandler() 
 
+
 if "data_uploaded" not in st.session_state:
     st.session_state['user_id'] = None
     st.session_state["data_uploaded"] = False
@@ -78,34 +79,27 @@ if not st.session_state["data_uploaded"]:
 
                    
 if st.session_state["data_uploaded"] and not st.session_state['snowflake_connected']:
-    with st.spinner('Connecting with Snowflake...'):
-        conn = snow_handler.connect_with_snowflake()
+    with st.spinner('Waiting for Snowflake...', show_time=True):
         st.session_state['snowflake_connected'] = True
 
+        snow_handler.reset_pipeline()
+
 if st.session_state['snowflake_connected'] and not st.session_state['data_updated']:
-    tables_pipes = {
-        'dim_cell_lines': 'update_dim_cell_lines',
-        'dim_drugs': 'update_dim_drugs',
-        'fac_results': 'update_fac_results',
-    }
+    with st.spinner("Merging data into target tables..."):
+        snow_handler.call_procedure("merge_into_dim_cell_lines()")
+        snow_handler.call_procedure("merge_into_dim_drugs()")
+        snow_handler.call_procedure("merge_into_fac_results()")
 
-    for table, pipe in tables_pipes.items():
-        with st.spinner(f'Refreshing data {table}', show_time=True):
-            snow_handler.refresh_snowpipe(pipe)
-            import time
-            time.sleep(10) 
+    tables = ["dim_cell_lines", "dim_drugs", "fac_results"]
+    for table in tables:
+        with st.spinner(f'Fetching {table}...'):
             columns, data = snow_handler.fetch_data(table)
-            users_data = pd.DataFrame(data, columns=columns)
+            df = pd.DataFrame(data, columns=columns)
+            st.session_state["data"][table] = df
 
-            st.session_state["data"][table] = users_data
-            st.session_state["data_updated"] = True
-            st.success(f"Data from {table} updated!")
-
-    fac_results = st.session_state["data"]["fac_results"]
-    cell_lines = st.session_state["data"]["dim_cell_lines"]
-    drugs = st.session_state["data"]["dim_drugs"]
     results = snow_handler.fetch_full_data("combined_results", st.session_state['user_id'])
     st.session_state['data'] = results
+    st.session_state["data_updated"] = True
 
 if st.session_state['data_updated'] and not st.session_state['data_analyzed']:
     
@@ -147,3 +141,6 @@ if st.session_state['data_updated'] and not st.session_state['data_analyzed']:
                 for fig in figures:
                     st.plotly_chart(fig)
                 st.session_state['plot_created'] = True
+
+if snow_handler:
+    snow_handler.close_connection()

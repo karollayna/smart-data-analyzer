@@ -68,15 +68,15 @@ class DataHandler:
         """
         Validates the uploaded files against expected file names and column structures.
 
-        Parameters:
+        Parameters
         ----------
         uploaded_files : list
-            A list of files uploaded by the user.
+            A list of files uploaded by the user via Streamlit's file uploader.
 
-        Returns:
+        Returns
         -------
-        valid_files : list
-            A list of valid files after validation.
+        list of tuple
+            A list of valid files, where each item is a tuple (file_name, file_content_bytes).
         """
         for uploaded_file in uploaded_files:
             if uploaded_file.name not in self.expected_files:
@@ -99,11 +99,7 @@ class DataHandler:
                     continue
 
             user_data['user_id'] = st.session_state['user_id']
-            
-            temp_file = f"temp_{uploaded_file.name}"
-            user_data.to_csv(temp_file, index=False)
-
-            self.valid_files.append((temp_file, open(temp_file, 'rb').read()))
+            self.valid_files.append((uploaded_file.name, user_data.to_csv(index=False).encode()))
             st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
     
         return self.valid_files
