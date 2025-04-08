@@ -10,7 +10,11 @@ designed to make it easy for you to create graphs from your data. 📊
 ![Plotly](https://img.shields.io/badge/Plotly-%233F4F75.svg?style=for-the-badge&logo=plotly&logoColor=white)
 ![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
 
-# 📦 Streamlit App
+## 🎥 Demo
+
+![Demo aplikacji](images/smart_data_analyzer_demo.gif)
+
+## 📦 Streamlit App
 
 here will be link 🔗
 
