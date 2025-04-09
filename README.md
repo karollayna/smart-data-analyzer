@@ -31,6 +31,15 @@ This application is intended for users who want to analyze data from photodynami
 | `data_photodynamic_therapy_drugs.csv` | `drug_code`, `drug_name` |
 | `data_photodynamic_therapy_results.csv` | `experiment_id`, `experiment_number`, `cell_line_code`, `treatment_time`, `drug_code`, `drug_concentration`, `result_001 - result_012` |
 
+**📥 Sample Files for Completion**
+
+Click below to download the CSV templates you need to fill in:
+
+- [data_photodynamic_therapy_cell_lines.csv](sample_files/data_photodynamic_therapy_cell_lines.csv)
+- [data_photodynamic_therapy_drugs.csv](sample_files/data_photodynamic_therapy_drugs.csv)
+- [data_photodynamic_therapy_results.csv](sample_files/data_photodynamic_therapy_results.csv)
+
+
 ## 🗂️ Data Architecture
   ![Data Architecture](images/data_architecture.png)
 

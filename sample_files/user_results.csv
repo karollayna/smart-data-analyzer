@@ -1,0 +1,4 @@
+experiment_id,experiment_number,cell_line_code,treatment_time,drug_code,drug_concentration,result_001,result_002,result_003,result_004,result_005,result_006,result_007,result_008,result_009,result_010,result_011,result_012
+1,1,cl001,0,d001,0,100,102,101,100, , , , , , , , 
+2,1,cl001,5,d001,20,50,52,51,50,53, , , , , , , 
+3,1,cl001,10,d001,40,33,32,30,31,35, , , , , , , 
