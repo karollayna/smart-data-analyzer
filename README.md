@@ -35,9 +35,9 @@ This application is intended for users who want to analyze data from photodynami
 
 Click below to download the CSV templates you need to fill in:
 
-- [data_photodynamic_therapy_cell_lines.csv](sample_files/data_photodynamic_therapy_cell_lines.csv)
-- [data_photodynamic_therapy_drugs.csv](sample_files/data_photodynamic_therapy_drugs.csv)
-- [data_photodynamic_therapy_results.csv](sample_files/data_photodynamic_therapy_results.csv)
+- [data_photodynamic_therapy_cell_lines.csv](sample_files/your_cell_lines.csv)
+- [data_photodynamic_therapy_drugs.csv](sample_files/your_drugs.csv)
+- [data_photodynamic_therapy_results.csv](sample_files/your_results.csv)
 
 
 ## 🗂️ Data Architecture
