@@ -50,6 +50,14 @@ Click below to download the CSV templates you need to fill in:
 
 The project is currently **in progress 🚘🔜**
 
-## ❓ Questions or suggestion
+## Branch Information:
+
+main branch:
+The first working version of the application. It runs in the cloud and is integrated with AWS S3 and Snowflake for data storage and processing.
+
+develop branch:
+This is the active development branch where I’m currently working on new features. The application here is designed to run locally.
+
+## ❓ Questions or suggestions
 
 Feel free to reach out with any questions or suggestions! 📧
