@@ -1,10 +1,4 @@
 import streamlit as st
-from data_handler import DataHandler
-from aws.aws_handler import AWSHandler
-from snow.snow_handler import SnowflakeHandler
-import uuid
-import pandas as pd
-
 
 st.set_page_config(
     page_title="Smart Data Analyzer",
