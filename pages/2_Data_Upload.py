@@ -1,6 +1,5 @@
 import streamlit as st
 from data_handler import DataHandler
-from aws.aws_handler import AWSHandler
 import uuid
 
 st.set_page_config(
@@ -11,12 +10,10 @@ st.set_page_config(
 st.title("Data Upload")
 
 data_handler = DataHandler()
-aws_handler = AWSHandler()
 
 if "data_uploaded" not in st.session_state:
     st.session_state['user_id'] = None
     st.session_state["data_uploaded"] = False
-    st.session_state["snowflake_connected"] = False
     st.session_state["data_updated"] = False
     st.session_state["data_analyzed"] = False
     st.session_state['data'] = {}
@@ -42,12 +39,6 @@ if not st.session_state["data_uploaded"]:
     if uploaded_files:
         valid_files = data_handler.validate_user_data(uploaded_files)
         if valid_files:
-            if st.button("Save your data :cloud:"):
-                with st.spinner("Uploading your data to the cloud..."):
-                    uploaded_files = aws_handler.upload_files_to_s3(valid_files)
-                    if uploaded_files:
-                        st.success(
-                            ":white_check_mark: Your data has been saved to the cloud."
-                        )
-                        st.session_state["data_uploaded"] = True 
+            print("Valid files:", valid_files)
+            st.session_state["data_uploaded"] = True 
 
