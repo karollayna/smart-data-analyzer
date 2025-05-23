@@ -34,7 +34,6 @@ with st.container():
     ##TODO: add note to inform the user that the ID is generated automatically or that they can choose an existing one
     st.write(f"**Your Unique ID:** {st.session_state['user_id']}")
 
-if not st.session_state["data_uploaded"]:
     ##TODO: add function to this part
     uploaded_files = data_handler.upload_user_files()
     if uploaded_files:
