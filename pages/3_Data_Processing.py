@@ -30,7 +30,7 @@ if st.session_state["data_uploaded"]:
                                                  on = 'cell_line_code',
                                                  how = 'left').merge(dfs['drugs.csv'][['drug_code', 'drug_name']], on = 'drug_code', how = 'left')
     final_df = merged_df.drop(columns=['cell_line_code', 'drug_code'])
-    st.write("### Zmergowany DataFrame:")
+    st.write("### Final Data:")
     st.dataframe(final_df)
 
    
