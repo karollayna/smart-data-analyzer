@@ -66,18 +66,21 @@ class DataHandler:
     
     def validate_user_data(self, uploaded_files):
         """
-        Validates the uploaded files against expected file names and column structures.
+        Validates uploaded CSV files against expected file names and column structures.
 
         Parameters
         ----------
         uploaded_files : list
-            A list of files uploaded by the user via Streamlit's file uploader.
+            List of files uploaded by the user via Streamlit's file uploader.
 
         Returns
         -------
-        list of tuple
-            A list of valid files, where each item is a tuple (file_name, file_content_bytes).
+        dict
+            Dictionary where keys are valid file names and values are pandas DataFrames 
+            containing the validated file data augmented with a 'user_id' column.
         """
+        self.valid_files = {}
+
         for uploaded_file in uploaded_files:
             if uploaded_file.name not in self.expected_files:
                 self.unexpected_files.append(uploaded_file.name)
@@ -85,24 +88,27 @@ class DataHandler:
                     f""":x: Unexpected files: {self.unexpected_files}\n
                         Expected files: {list(self.expected_files.keys())}"""
                 )
-            else:
-                user_data = pd.read_csv(uploaded_file)
-                expected_columns = self.expected_files[uploaded_file.name]
-                if user_data.empty:
-                    st.error(f':x: File "{uploaded_file.name}" is empty.')
-                    continue
-                if list(user_data.columns) != expected_columns:
-                    st.error(
-                        f""":x: File "{uploaded_file.name}" has incorrect columns.\n
-                            Expected: {expected_columns}\n Found: {list(user_data.columns)}"""
-                    )
-                    continue
+                continue
+            
+            user_data = pd.read_csv(uploaded_file)
+            expected_columns = self.expected_files[uploaded_file.name]
+            if user_data.empty:
+                st.error(f':x: File "{uploaded_file.name}" is empty.')
+                continue
+            if list(user_data.columns) != expected_columns:
+                st.error(
+                    f""":x: File "{uploaded_file.name}" has incorrect columns.\n
+                        Expected: {expected_columns}\n Found: {list(user_data.columns)}"""
+                )
+                continue
 
             user_data['user_id'] = st.session_state['user_id']
-            self.valid_files.append((uploaded_file.name, user_data.to_csv(index=False).encode()))
+            self.valid_files[uploaded_file.name] = user_data
             st.success(f':white_check_mark: File "{uploaded_file.name}" is valid.')
     
         return self.valid_files
+    
+    
     
 
 

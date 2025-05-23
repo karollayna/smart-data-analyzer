@@ -1,6 +1,7 @@
 import streamlit as st
 from data_handler import DataHandler
 import uuid
+import pandas as pd
 
 st.set_page_config(
     page_title="Data Upload",
@@ -39,6 +40,11 @@ if not st.session_state["data_uploaded"]:
     if uploaded_files:
         valid_files = data_handler.validate_user_data(uploaded_files)
         if valid_files:
-            print("Valid files:", valid_files)
-            st.session_state["data_uploaded"] = True 
+            st.session_state['data'] = valid_files
+            st.session_state['data_uploaded'] = True
 
+if st.session_state["data_uploaded"]:
+    for filename, df in st.session_state['data'].items():
+        with st.expander(f"File: {filename}", expanded=False):
+            st.write(f"### File: {filename}")
+            st.dataframe(df)
