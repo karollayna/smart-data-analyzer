@@ -1,6 +1,7 @@
 import streamlit as st
 from data_handler import DataHandler
 import uuid
+import pandas as pd
 
 st.set_page_config(
     page_title="Data Upload",
@@ -33,12 +34,16 @@ with st.container():
     ##TODO: add note to inform the user that the ID is generated automatically or that they can choose an existing one
     st.write(f"**Your Unique ID:** {st.session_state['user_id']}")
 
-if not st.session_state["data_uploaded"]:
     ##TODO: add function to this part
     uploaded_files = data_handler.upload_user_files()
     if uploaded_files:
         valid_files = data_handler.validate_user_data(uploaded_files)
         if valid_files:
-            print("Valid files:", valid_files)
-            st.session_state["data_uploaded"] = True 
+            st.session_state['data'] = valid_files
+            st.session_state['data_uploaded'] = True
 
+if st.session_state["data_uploaded"]:
+    for filename, df in st.session_state['data'].items():
+        with st.expander(f"File: {filename}", expanded=False):
+            st.write(f"### File: {filename}")
+            st.dataframe(df)
